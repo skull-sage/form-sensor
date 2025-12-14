@@ -1,0 +1,27 @@
+p, h2, h3{
+  margin: 0;
+}
+
+.editor-doc-basic, .doc-basic{
+
+
+  span.fill-gap{
+    display: inline-block;
+    letter-spacing: -1px;
+    //outline-bottom: 2px solid $grey-8;
+  }
+
+
+
+  * +  p, * + h2, * + h3 {
+    margin-top: $space-base;
+  }
+
+  h3 + p, p + ul, p + ol, h2 + ul, h2 + ol, h3 + ul, h3 + ol {
+    margin-top : $space-half
+  }
+
+  div.example + div.example{
+    margin-top: $space-half;
+  }
+}

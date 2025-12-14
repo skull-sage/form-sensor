@@ -1,0 +1,44 @@
+{
+  "name": "frontend",
+  "version": "0.0.1",
+  "description": "A project where ZeroMetry, LitSprit, VidLight MVPs are born",
+  "productName": "playbook",
+  "author": "Rashed Alam <rashed091@gmail.com>",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "quasar dev",
+    "build": "quasar build"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.16.17",
+    "animejs": "^3.2.2",
+    "axios": "^1.9.0",
+    "dom-to-image": "^2.6.0",
+    "katex": "^0.16.22",
+    "lodash": "^4.17.21",
+    "prosemirror-commands": "^1.7.1",
+    "prosemirror-history": "^1.4.1",
+    "prosemirror-inputrules": "^1.5.0",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.1",
+    "prosemirror-schema-list": "^1.5.1",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-view": "^1.39.2",
+    "quasar": "^2.18.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@quasar/app-vite": "2.2.0",
+    "@types/node": "^20.17.47",
+    "autoprefixer": "^10.4.21",
+    "typescript": "~5.5.4"
+  },
+  "engines": {
+    "node": "^24 || ^22 || ^20 || ^18",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  }
+}

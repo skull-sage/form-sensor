@@ -1,0 +1,27 @@
+services:
+  playbook:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    expose:
+      - 80
+    networks:
+      - devnindo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.playbook.rule=Host(`playbook.devnindo.io`)"
+      - "traefik.http.routers.playbook.entrypoints=websecure"
+      - "traefik.http.routers.playbook.tls.certresolver=le"
+      - "traefik.http.services.playbook.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.playbook-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.playbook-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.playbook.middlewares=playbook-redirect"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.playbook-http.rule=Host(`playbook.devnindo.io`)"
+      - "traefik.http.routers.playbook-http.entrypoints=web"
+      - "traefik.http.routers.playbook-http.middlewares=playbook-redirect"
+
+networks:
+  devnindo-network:
+    external: true 

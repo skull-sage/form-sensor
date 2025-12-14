@@ -1,0 +1,33 @@
+
+
+$color-primary : $teal-14;
+$color-secondary: $blue-12;
+
+
+.highlight{
+  background-position: 0 1rem;
+  background-size: 1px 2px;
+  background-repeat: repeat-x;
+  text-shadow:  0px 1px 0px white,
+                -1px 1px 0px white,
+                -1px 1px 0px white;
+
+
+  &.color-primary{
+    color: $color-primary
+  }
+
+  &.color-secondary{
+    color: $color-secondary
+  }
+
+  &.underline-primary{
+
+      background-image: linear-gradient($color-primary 0%, $color-primary 100%);
+  }
+
+  &.underline-secondary{
+    background-image: linear-gradient($color-secondary 0%, $color-secondary 100%);
+  }
+
+}

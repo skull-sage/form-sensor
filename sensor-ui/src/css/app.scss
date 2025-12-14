@@ -1,0 +1,16 @@
+// app global css in SCSS form
+
+@import "typography/_index";
+
+
+
+
+.q-icon{
+  opacity: 0.5;
+}
+
+section.section-heading + section.section-content {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+

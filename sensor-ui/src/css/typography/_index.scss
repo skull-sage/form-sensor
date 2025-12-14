@@ -1,0 +1,13 @@
+
+@import "text-scale";
+@import "block-space";
+@import "list-style";
+@import "block-embed";
+@import "highlight";
+
+.editor-doc-basic, .doc-basic{
+  caret-color: $cyan-6;
+  ::selection{
+    background: $blue-grey-2;
+  }
+}

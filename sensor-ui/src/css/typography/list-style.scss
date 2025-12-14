@@ -1,0 +1,127 @@
+.editor-doc-basic, .doc-basic{
+
+  ul, ol{
+
+    padding-inline-start: 3rem;
+    list-style: none;
+
+    @media (max-width: $breakpoint-xs-max){
+      padding-inline-start: 2rem;
+    }
+
+    li + li{
+      margin-top: $space-half;
+    }
+
+    li {
+      min-height: $space-base;
+      //display: flex;
+
+
+      p + p {
+        margin-top: 8px;
+      }
+    }
+
+    li:before {
+      position: absolute;
+      margin-left: -2rem;
+      text-align: right;
+      @media (max-width: $breakpoint-xs-max){
+        margin-left: -1.5rem;
+      }
+
+    }
+
+
+
+  }
+
+  ul > li:before, ol > li:before {
+    content: '\25CF';
+    color: $grey-6;
+    font-weight: bold;
+  }
+
+
+  ol{
+    counter-reset: list;
+
+    li{
+      counter-increment: list;
+    }
+    li:before {
+
+      content: counter(list) ") ";
+    }
+  }
+
+  ol[type='lower-alpha'] >  li:before {
+    content: counter(list, lower-alpha) ") ";
+  }
+
+  ol[type='upper-alpha'] >  li:before {
+    content: counter(list, upper-alpha) ") ";
+  }
+
+  ol[type='upper-roman'] >  li:before {
+    content: counter(list, upper-roman) ") ";
+  }
+
+  ol[type='lower-roman'] >  li:before {
+    content: counter(list, lower-roman) ") ";
+  }
+
+  ol[type='bn-numeric'] >  li:before {
+    content: counter(list,  bengali) ") ";
+  }
+
+  ol[type='bn-alpha'] {
+
+    li:nth-child(1):before
+    {
+      content: "ক) ";
+    }
+    li:nth-child(2):before
+    {
+      content: 'খ) ';
+
+    }
+    li:nth-child(3):before
+    {
+      content: 'গ) ';
+
+    }
+    li:nth-child(4):before
+    {
+      content: 'ঘ) ';
+
+    }
+    li:nth-child(5):before
+    {
+      content: 'চ) ';
+
+    }
+    li:nth-child(6):before
+    {
+      content: 'ছ) ';
+
+    }
+    li:nth-child(7):before
+    {
+      content: 'জ) ';
+
+    }
+    li:nth-child(8):before
+    {
+      content: 'ঝ) ';
+
+    }
+    li:nth-child(9):before
+    {
+      content: 'ঞ) ';
+    }
+
+
+  }
+}

@@ -1,0 +1,64 @@
+
+.editor-doc-basic, .doc-basic{
+
+  * + div.example{
+    margin-top: 0.3rem;
+  }
+
+  div.example{
+    background-color: $grey-1;
+    padding: 8px;
+  }
+
+
+  div.example-caption{
+    font-size: 0.85rem;
+    line-height: 1;
+    font-weight: bold;
+  }
+  p.example-content {
+    margin-left: $space-half;
+     color: $blue-grey-8;
+  }
+  p.example-content, p.example-explanation{
+    margin-top: 0.25rem;
+  }
+
+//div.example-caption:before{ content: "caption"}
+//p.example-content:before{ content: "content"}
+//p.example-explanation:before{ content: "explanation"}
+
+
+
+  div.block-math
+  {
+    font-size: 16px;
+
+    padding-top: 1px ;
+    padding-bottom: 1px;
+    background-color: $grey-1;
+
+    @media(min-width: $breakpoint-sm-min) {
+      padding-left: $space-base ;
+    }
+  }
+
+  * + div.block-math{
+    margin-top: $space-base;
+  }
+
+
+  .katex-display > .katex{
+    line-height: 1.5;
+  }
+
+
+  figure{
+
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+  }
+
+}
