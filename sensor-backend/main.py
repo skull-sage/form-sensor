@@ -80,8 +80,8 @@ def load_model():
 load_model()
 
 # In-memory storage for text sensors
-text_store = {}  # nameId -> request-text
-embedding_store = {}  # nameId -> [embeddings]
+text_store = {}  # nameId -> original full text
+sensor_data_list = {}  # nameId -> [(paragraph, embedding), (paragraph, embedding), ...]
 
 class CreateSensorRequest(BaseModel):
     text: str
@@ -107,6 +107,15 @@ class SimilarityRequest(BaseModel):
 
 class SimilarityResponse(BaseModel):
     confidence_score: float
+    matched_paragraph: str
+
+class BulkCreateRequest(BaseModel):
+    sensors: Dict[str, str]  # nameId -> text mapping
+
+class BulkCreateResponse(BaseModel):
+    created: List[str]  # list of successfully created sensor nameIds
+    skipped: List[str]  # list of nameIds that already existed
+    failed: List[str]   # list of nameIds that failed to create
 
 class SensorListResponse(BaseModel):
     sensors: Dict[str, str]  # nameId -> text mapping
@@ -145,6 +154,70 @@ async def reload_model():
             detail=f"Failed to reload model: {model_error}"
         )
 
+@app.post("/bulk-create-sensors", response_model=BulkCreateResponse)
+async def bulk_create_sensors(request: BulkCreateRequest):
+    """
+    Bulk create text sensors from browser storage.
+    Only creates sensors that don't already exist.
+    """
+    try:
+        # Check if model is loaded
+        check_model_availability()
+        
+        created = []
+        skipped = []
+        failed = []
+        
+        for name_id, text in request.sensors.items():
+            try:
+                # Validate nameId
+                validated_name_id = validate_name_id(name_id)
+                
+                # Skip if sensor already exists
+                if validated_name_id in sensor_data_list:
+                    skipped.append(validated_name_id)
+                    continue
+                
+                # Store original text mapping
+                text_store[validated_name_id] = text
+                
+                # Split text by newlines into paragraph array
+                paragraph_list = [p.strip() for p in text.split('\n') if p.strip()]
+                
+                if not paragraph_list:
+                    failed.append(validated_name_id)
+                    continue
+                
+                # Generate embeddings and create paired data structure
+                sensor_pairs = []
+                for paragraph in paragraph_list:
+                    try:
+                        embedding = model.encode(paragraph)
+                        sensor_pairs.append((paragraph, embedding))
+                    except Exception as e:
+                        print(f"Error generating embedding for paragraph in {validated_name_id}: {e}")
+                        failed.append(validated_name_id)
+                        break
+                else:
+                    # Store paired data: nameId → [(paragraph, embedding), ...]
+                    sensor_data_list[validated_name_id] = sensor_pairs
+                    created.append(validated_name_id)
+                    
+            except Exception as e:
+                print(f"Error processing sensor {name_id}: {e}")
+                failed.append(name_id)
+        
+        return BulkCreateResponse(
+            created=created,
+            skipped=skipped,
+            failed=failed
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error bulk creating sensors: {str(e)}")
+
 def validate_name_id(name_id: str) -> str:
     """Validate nameId parameter"""
     if not name_id or not name_id.strip():
@@ -171,16 +244,16 @@ def check_model_availability():
 
 def check_sensor_exists(name_id: str, operation: str = "access"):
     """Check if a text sensor exists and provide descriptive error messages"""
-    if name_id not in embedding_store:
+    if name_id not in sensor_data_list:
         if name_id in text_store:
-            # Edge case: text exists but no embeddings (corrupted state)
+            # Edge case: text exists but no sensor data (corrupted state)
             raise HTTPException(
                 status_code=500, 
-                detail=f"Text sensor '{name_id}' is in corrupted state (text exists but no embeddings). Please recreate the sensor."
+                detail=f"Text sensor '{name_id}' is in corrupted state (text exists but no sensor data). Please recreate the sensor."
             )
         else:
             # Normal case: sensor doesn't exist
-            available_sensors = list(embedding_store.keys())
+            available_sensors = list(sensor_data_list.keys())
             if available_sensors:
                 raise HTTPException(
                     status_code=404, 
@@ -205,35 +278,35 @@ async def create_text_sensor(name_id: str, request: CreateSensorRequest):
         # Check if model is loaded
         check_model_availability()
         
-        # Store paragraph mapping: nameId → [paragraphs]
+        # Store original text mapping: nameId → full text
         text_store[name_id] = request.text
     
         # Split text by newlines into paragraph array
-        paragraphs = [p.strip() for p in request.text.split('\n') if p.strip()]
+        paragraph_list = [p.strip() for p in request.text.split('\n') if p.strip()]
         
-        if not paragraphs:
+        if not paragraph_list:
             raise HTTPException(status_code=400, detail="Text must contain at least one non-empty paragraph")
         
-        # Generate embeddings for each paragraph using all-MiniLM-L6-v2 model
-        embeddings = []
-        for paragraph in paragraphs:
+        # Generate embeddings and create paired data structure
+        sensor_pairs = []
+        for paragraph in paragraph_list:
             try:
                 embedding = model.encode(paragraph)
-                embeddings.append(embedding)
+                sensor_pairs.append((paragraph, embedding))
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Error generating embedding for paragraph: {str(e)}")
         
-        # Store embedding mapping: nameId → [embeddings] parallel to paragraphs
-        embedding_store[name_id] = embeddings
+        # Store paired data: nameId → [(paragraph, embedding), ...]
+        sensor_data_list[name_id] = sensor_pairs
         
-        return {"message": "Text sensor created", "paragraphs_count": len(paragraphs)}
+        return {"message": "Text sensor created", "paragraphs_count": len(sensor_pairs)}
     
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating text sensor: {str(e)}")
 
-@app.post("/text-sensor/{name_id}")
+@app.post("/text-sensor/{name_id}", response_model=SimilarityResponse)
 async def check_similarity(name_id: str, request: SimilarityRequest):
     """
     Check semantic similarity against a specific text sensor.
@@ -256,15 +329,15 @@ async def check_similarity(name_id: str, request: SimilarityRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating embedding for input text: {str(e)}")
         
-        # Retrieve stored embeddings for nameId
-        stored_embeddings = embedding_store[name_id]
+        # Retrieve stored sensor data (paragraph, embedding pairs) for nameId
+        sensor_pairs = sensor_data_list[name_id]
         
-        if not stored_embeddings:
-            raise HTTPException(status_code=404, detail=f"No embeddings found for text sensor '{name_id}'")
+        if not sensor_pairs:
+            raise HTTPException(status_code=404, detail=f"No sensor data found for text sensor '{name_id}'")
         
         # Calculate cosine similarity between input and all stored embeddings
         similarity_scores = []
-        for stored_embedding in stored_embeddings:
+        for paragraph, stored_embedding in sensor_pairs:
             try:
                 # Reshape embeddings for cosine_similarity function
                 input_emb_reshaped = input_embedding.reshape(1, -1)
@@ -272,15 +345,18 @@ async def check_similarity(name_id: str, request: SimilarityRequest):
                 
                 # Calculate cosine similarity
                 similarity = cosine_similarity(input_emb_reshaped, stored_emb_reshaped)[0][0]
-                similarity_scores.append(similarity)
+                similarity_scores.append((similarity, paragraph))
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Error calculating similarity: {str(e)}")
         
-        # Return highest similarity score regardless of threshold
-        # Frontend can use 0.6 threshold for guidance but API always returns actual score
-        highest_score = max(similarity_scores)
+        # Find the best match (highest similarity score and corresponding paragraph)
+        best_match = max(similarity_scores, key=lambda x: x[0])
+        highest_score, matched_paragraph = best_match
         
-        return {"confidence_score": float(highest_score)}
+        return {
+            "confidence_score": float(highest_score),
+            "matched_paragraph": matched_paragraph
+        }
     
     except HTTPException:
         raise
@@ -294,10 +370,10 @@ async def get_text_sensors():
     Format: {"sensors": {"nameId": "text content", ...}, "count": N}
     """
     try:
-        # Get all nameIds from the embedding store (which contains all active sensors)
+        # Get all nameIds from the sensor data list (which contains all active sensors)
         # and create mapping of nameId -> text content
         sensors_mapping = {}
-        for name_id in embedding_store.keys():
+        for name_id in sensor_data_list.keys():
             if name_id in text_store:
                 sensors_mapping[name_id] = text_store[name_id]
         
@@ -322,13 +398,13 @@ async def delete_text_sensor(name_id: str):
         # Check if nameId exists
         check_sensor_exists(name_id, "deletion")
         
-        # Remove paragraph mapping for nameId
+        # Remove text mapping for nameId
         if name_id in text_store:
             del text_store[name_id]
         
-        # Remove embedding mapping for nameId
-        if name_id in embedding_store:
-            del embedding_store[name_id]
+        # Remove sensor data (paragraph, embedding pairs) for nameId
+        if name_id in sensor_data_list:
+            del sensor_data_list[name_id]
         
         return {"message": f"Text sensor '{name_id}' deleted successfully"}
     
