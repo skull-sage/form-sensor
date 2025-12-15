@@ -18,6 +18,7 @@
     - Load all-MiniLM-L6-v2 sentence transformer model
     - Generate embeddings for each paragraph
     - Store embedding mapping: nameId → [embeddings] parallel to paragraphs
+    - **ENHANCED**: Store paired data structure: nameId → [(paragraph, embedding), ...] for matched paragraph retrieval
     - Return success response with paragraph count
     - _Requirements: 1.3, 1.4_
 
@@ -40,6 +41,7 @@
   - [x] 3.2 Implement cosine similarity calculation and response logic
     - Calculate cosine similarity between input and all stored embeddings
     - Return highest similarity score as {"confidence_score": score} regardless of threshold
+    - **ENHANCED**: Return matched paragraph along with confidence score as {"confidence_score": score, "matched_paragraph": "text"}
     - Frontend can use 0.6 threshold for guidance but API always returns actual score
     - _Requirements: 2.3, 2.4, 3.2, 3.4, 3.5_
 
@@ -84,17 +86,21 @@
     - **Property 8: Input Validation Error Handling**
     - **Validates: Requirements 6.1, 6.4**
 
-- [ ] 6. Update frontend for new API endpoints
-  - [ ] 6.1 Modify SemanticSensor.vue for new endpoint structure
-    - Update API calls to use /create-text-sensor/:nameId
-    - Update API calls to use /text-sensor/:nameId
-    - Handle {"confidence_score": score} response format
+- [x] 6. Update frontend for new API endpoints
+  - [x] 6.1 Implement field-list.vue component
+    - **IMPLEMENTED**: GET /text-sensors to display list of sensors with nameId and text
+    - **IMPLEMENTED**: POST /create-text-sensor/:nameId to create new sensors
+    - **IMPLEMENTED**: DELETE /text-sensor/:nameId to remove sensors
+    - **IMPLEMENTED**: Auto-refresh view when new sensor is created
+    - **IMPLEMENTED**: Form validation and error handling
     - _Requirements: 5.1, 5.3_
 
-  - [ ] 6.2 Add nameId management to frontend
-    - Add input field for nameId when creating sensors
-    - Add dropdown/selection for nameId when checking similarity
-    - Display list of available sensors
+  - [x] 6.2 Implement field-verify.vue component  
+    - **IMPLEMENTED**: POST /text-sensor/:nameId to verify text against sensors
+    - **IMPLEMENTED**: Dropdown selection for available sensors
+    - **IMPLEMENTED**: Display confidence score with visual indicators
+    - **IMPLEMENTED**: Show matched paragraph from verification result
+    - **IMPLEMENTED**: Color-coded confidence levels and interpretation messages
     - _Requirements: 5.2, 5.4_
 
 - [ ] 7. Final integration and testing

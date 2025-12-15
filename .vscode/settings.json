@@ -1,0 +1,43 @@
+{
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "entity.name.tag.html",
+        "settings": {
+          "foreground": "#41B883"
+        }
+      },
+      {
+        "scope": "entity.name.tag.custom.html",
+        "settings": {
+          "foreground": "#41B883"
+        }
+      }
+    ]
+  },
+  "files.associations": {
+    "*.vue": "vue"
+  },
+  "vetur.validation.template": true,
+  "vetur.completion.scaffoldSnippetSources": {
+    "workspace": "💼",
+    "user": "🗒️",
+    "vetur": "✌"
+  },
+  "vetur.experimental.templateInterpolationService": true,
+  "vetur.validation.templateProps": true,
+  "vetur.completion.tagCasing": "kebab",
+  "vetur.useWorkspaceDependencies": true,
+  "vetur.format.defaultFormatter.html": "prettier",
+  "vetur.format.defaultFormatter.js": "prettier",
+  "vetur.format.defaultFormatter.ts": "prettier",
+  "vetur.grammar.customBlocks": {
+    "docs": "md",
+    "i18n": "json"
+  },
+  "vetur.completion.autoImport": true,
+  "kiroAgent.configureMCP": "Disabled"
+}
