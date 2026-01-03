@@ -1,4 +1,7 @@
-# Implementation Plan
+# Form Sensor Module - Implementation Plan
+
+## Module: form-sensor
+**Purpose**: Semantic text similarity detection for form field validation
 
 - [x] 1. Set up core backend structure and dependencies
   - Install sentence-transformers and required dependencies
@@ -7,7 +10,7 @@
   - _Requirements: 4.1, 7.1_
 
 - [x] 2. Implement text sensor creation endpoint
-  - [x] 2.1 Create POST /create-text-sensor/:nameId endpoint
+  - [x] 2.1 Create POST /form-sensor/create-text-sensor/:nameId endpoint
     - Parse nameId from URL path
     - Accept {"text": "paragraphs"} in request body
     - Split text by newlines into paragraph array
@@ -31,7 +34,7 @@
     - **Validates: Requirements 1.2, 1.4**
 
 - [x] 3. Implement similarity checking endpoint
-  - [x] 3.1 Create POST /text-sensor/:nameId endpoint
+  - [x] 3.1 Create POST /form-sensor/text-sensor/:nameId endpoint
     - Parse nameId from URL path
     - Accept {"text": "description"} in request body
     - Generate embedding for input text
@@ -54,13 +57,13 @@
     - **Validates: Requirements 2.4**
 
 - [x] 4. Implement sensor management endpoints
-  - [x] 4.1 Create GET /text-sensors endpoint
+  - [x] 4.1 Create GET /form-sensor/text-sensors endpoint
     - Return list of all stored nameIds
     - Return count of sensors
     - Format: {"sensors": [...], "count": N}
     - _Requirements: 4.4_
 
-  - [x] 4.2 Create DELETE /text-sensor/:nameId endpoint
+  - [x] 4.2 Create DELETE /form-sensor/text-sensor/:nameId endpoint
     - Remove paragraph mapping for nameId
     - Remove embedding mapping for nameId
     - Return success confirmation
@@ -88,15 +91,15 @@
 
 - [x] 6. Update frontend for new API endpoints
   - [x] 6.1 Implement field-list.vue component
-    - **IMPLEMENTED**: GET /text-sensors to display list of sensors with nameId and text
-    - **IMPLEMENTED**: POST /create-text-sensor/:nameId to create new sensors
-    - **IMPLEMENTED**: DELETE /text-sensor/:nameId to remove sensors
+    - **IMPLEMENTED**: GET /form-sensor/text-sensors to display list of sensors with nameId and text
+    - **IMPLEMENTED**: POST /form-sensor/create-text-sensor/:nameId to create new sensors
+    - **IMPLEMENTED**: DELETE /form-sensor/text-sensor/:nameId to remove sensors
     - **IMPLEMENTED**: Auto-refresh view when new sensor is created
     - **IMPLEMENTED**: Form validation and error handling
     - _Requirements: 5.1, 5.3_
 
   - [x] 6.2 Implement field-verify.vue component  
-    - **IMPLEMENTED**: POST /text-sensor/:nameId to verify text against sensors
+    - **IMPLEMENTED**: POST /form-sensor/text-sensor/:nameId to verify text against sensors
     - **IMPLEMENTED**: Dropdown selection for available sensors
     - **IMPLEMENTED**: Display confidence score with visual indicators
     - **IMPLEMENTED**: Show matched paragraph from verification result

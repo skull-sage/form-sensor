@@ -1,18 +1,24 @@
-# Design Document
+# Form Sensor Module - Design Document
 
 ## Overview
 
-The Semantic Description Sensor is a full-stack application that provides semantic similarity detection using sentence transformers. The system consists of a FastAPI backend that processes text using the all-MiniLM-L6-v2 model and a Vue.js frontend for user interaction. The core functionality revolves around creating "text sensors" from multi-paragraph text and checking semantic similarity against stored paragraph embeddings.
+The Form Sensor module provides semantic similarity detection for form field validation using sentence transformers. The module uses the all-MiniLM-L6-v2 model to process text and check semantic similarity against stored paragraph embeddings. The core functionality revolves around creating "text sensors" from multi-paragraph text and checking semantic similarity for smart form validation.
 
-## Architecture
+## Module Architecture
 
-The system follows a clean architecture pattern with clear separation between layers:
+The form-sensor module follows a clean architecture pattern with clear separation between layers:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend API   │    │   ML Model      │
+│   Frontend      │    │   Module Router │    │   ML Model      │
 │   (Vue/Quasar)  │◄──►│   (FastAPI)     │◄──►│ (Transformers)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌─────────────────┐
+                       │  Module Service │
+                       │  (Business Logic)│
+                       └─────────────────┘
                               │
                               ▼
                        ┌─────────────────┐
@@ -21,58 +27,64 @@ The system follows a clean architecture pattern with clear separation between la
                        └─────────────────┘
 ```
 
-### Component Responsibilities
+### Module Structure
 
-- **Frontend**: User interface for creating text sensors and checking similarity
-- **Backend API**: RESTful endpoints, text processing, and similarity calculations  
-- **ML Model**: Sentence transformer for generating embeddings
-- **Data Storage**: In-memory storage for paragraph and embedding mappings
+```
+sensor-backend/
+├── form-sensor/           # Form sensor module
+│   ├── __init__.py
+│   ├── router.py         # API endpoints with /form-sensor prefix
+│   ├── services.py       # SensorService business logic
+│   ├── schemas.py        # Pydantic models
+│   ├── validators.py     # Input validation
+│   └── models.py         # Database models (optional)
+└── main.py               # App initialization and module registration
+```
 
-## Components and Interfaces
+## Module Components and Interfaces
 
-### Backend Components
-
-#### TextSensorService
+### SensorService (services.py)
 - **Purpose**: Core business logic for text sensor operations
 - **Methods**:
-  - `create_text_sensor(name_id: str, text: str) -> dict`
-  - `check_similarity(name_id: str, text: str) -> dict`
-  - `get_all_sensors() -> list`
-  - `delete_sensor(name_id: str) -> bool`
+  - `create_sensor(name_id: str, text: str) -> dict`
+  - `calculate_similarity(input_text: str, name_id: str) -> dict`
+  - `get_all_sensors() -> dict`
+  - `delete_sensor(name_id: str) -> dict`
+  - `bulk_create_sensors(sensors_dict: dict) -> dict`
 
-#### EmbeddingService  
-- **Purpose**: Handles sentence transformer operations
-- **Methods**:
-  - `generate_embedding(text: str) -> np.ndarray`
-  - `calculate_similarity(embedding1: np.ndarray, embedding2: np.ndarray) -> float`
-  - `load_model() -> SentenceTransformer`
+### Module Router (router.py)
+- **Purpose**: API endpoints with /form-sensor prefix
+- **Endpoints**: See API Endpoints section below
 
-#### StorageService
-- **Purpose**: Manages in-memory data storage
-- **Methods**:
-  - `store_paragraphs(name_id: str, paragraphs: list) -> None`
-  - `store_embeddings(name_id: str, embeddings: list) -> None`
-  - `get_paragraphs(name_id: str) -> list`
-  - `get_embeddings(name_id: str) -> list`
-  - `delete_sensor_data(name_id: str) -> bool`
+### Validators (validators.py)
+- **Purpose**: Input validation functions
+- **Functions**:
+  - `validate_name_id(name_id: str) -> str`
+  - `validate_text_content(text: str, max_length: int) -> str`
+  - `validate_paragraphs(paragraphs: list) -> list`
+  - `validate_bulk_sensors(sensors_dict: dict) -> dict`
 
 ### API Endpoints
 
-#### POST /create-text-sensor/:nameId
+#### POST /form-sensor/create-text-sensor/:nameId
 - **Input**: `{"text": "paragraph1\nparagraph2\nparagraph3"}`
 - **Output**: `{"message": "Text sensor created", "paragraphs_count": 3}`
 - **Process**: Split text → Store paragraphs → Generate embeddings → Store embeddings
 
-#### POST /text-sensor/:nameId  
+#### POST /form-sensor/text-sensor/:nameId  
 - **Input**: `{"text": "description to check"}`
-- **Output**: `{"confidence_score": 0.75}` (always returns actual highest score)
-- **Process**: Generate embedding → Compare with stored embeddings → Return highest similarity score
+- **Output**: `{"confidence_score": 0.75, "matched_paragraph": "text"}`
+- **Process**: Generate embedding → Compare with stored embeddings → Return highest similarity score and matched paragraph
 
-#### GET /text-sensors
-- **Output**: `{"sensors": ["sensor1", "sensor2"], "count": 2}`
+#### GET /form-sensor/text-sensors
+- **Output**: `{"sensors": {"sensor1": "text1", "sensor2": "text2"}, "count": 2}`
 
-#### DELETE /text-sensor/:nameId
+#### DELETE /form-sensor/text-sensor/:nameId
 - **Output**: `{"message": "Text sensor deleted"}`
+
+#### POST /form-sensor/bulk-create-sensors
+- **Input**: `{"sensors": {"nameId1": "text1", "nameId2": "text2"}}`
+- **Output**: `{"created": ["nameId1"], "skipped": [], "failed": []}`
 
 ## Data Models
 
@@ -114,6 +126,7 @@ class SensorListResponse(BaseModel):
 ### Property 1: Text Splitting Consistency
 *For any* input text with newline separators, splitting the text should produce an array where the number of paragraphs equals the number of newline-separated segments
 **Validates: Requirements 1.1**
+**Module: form-sensor**
 
 ### Property 2: Paragraph-Embedding Correspondence  
 *For any* nameId with stored paragraphs, the number of stored embeddings should equal the number of stored paragraphs

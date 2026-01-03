@@ -211,7 +211,7 @@ const bulkCreateFromStorage = async () => {
 
   bulkCreating.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/bulk-create-sensors`, {
+    const response = await fetch(`${API_BASE_URL}/form-sensor/bulk-create-sensors`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -263,7 +263,7 @@ const bulkCreateFromStorage = async () => {
 const loadSensors = async () => {
   loading.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/text-sensors`)
+    const response = await fetch(`${API_BASE_URL}/form-sensor/text-sensors`)
     if (response.ok) {
       const data = await response.json()
       // Convert sensors object to array format
@@ -290,7 +290,7 @@ const loadSensors = async () => {
 const createSensor = async () => {
   creating.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/create-text-sensor/${newSensor.value.nameId}`, {
+    const response = await fetch(`${API_BASE_URL}/form-sensor/create-text-sensor/${newSensor.value.nameId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -386,7 +386,7 @@ const deleteSensor = async (nameId: string) => {
   }).onOk(async () => {
     deleting.value = nameId
     try {
-      const response = await fetch(`${API_BASE_URL}/text-sensor/${nameId}`, {
+      const response = await fetch(`${API_BASE_URL}/form-sensor/text-sensor/${nameId}`, {
         method: 'DELETE'
       })
 

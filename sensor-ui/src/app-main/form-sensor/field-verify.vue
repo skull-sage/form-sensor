@@ -209,7 +209,7 @@ const loadSensors = async () => {
 
   loadingSensors.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/text-sensors`)
+    const response = await fetch(`${API_BASE_URL}/form-sensor/text-sensors`)
     if (response.ok) {
       const data = await response.json()
       // Convert sensors object to array format
@@ -240,7 +240,7 @@ const verifyText = async () => {
   result.value = null
 
   try {
-    const response = await fetch(`${API_BASE_URL}/text-sensor/${selectedSensor.value.value}`, {
+    const response = await fetch(`${API_BASE_URL}/form-sensor/text-sensor/${selectedSensor.value.value}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

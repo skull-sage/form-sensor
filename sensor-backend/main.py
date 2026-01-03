@@ -6,12 +6,13 @@ from sentence_transformers import SentenceTransformer
 import uvicorn
 import json
 
-from app.schemas import (
-    CreateSensorRequest, SimilarityRequest, SimilarityResponse,
-    BulkCreateRequest, BulkCreateResponse, SensorListResponse,
-    CreateSensorResponse, DeleteSensorResponse, HealthResponse
-)
-from app.services import SensorService
+from form_sensor.schemas import HealthResponse
+from form_sensor.services import SensorService
+from form_sensor import router as form_sensor_router
+from doc_sensor.services import CVService
+from doc_sensor import router as doc_sensor_router
+from form_ocr.services import FormOCRService
+import form_ocr as form_ocr_module
 
 app = FastAPI(
     title="Semantic Description Sensor API",
@@ -83,8 +84,16 @@ def load_model():
 text_store = {}  # nameId -> original full text
 sensor_data_list = {}  # nameId -> [(paragraph, embedding), (paragraph, embedding), ...]
 
-# Initialize service (will be set after model loads)
+# In-memory storage for CV analysis
+cv_store = {}  # cv_id -> {id, filename, upload_date, pages, raw_text, file_size, analysis}
+
+# In-memory storage for Form OCR
+form_store = {}  # form_id -> {id, filename, upload_date, page_count, file_size, processing_status, pages, metadata}
+
+# Initialize services (will be set after model loads)
 sensor_service = None
+cv_service = None
+form_ocr_service = None
 
 # Try to load model on startup
 load_model()
@@ -92,6 +101,20 @@ load_model()
 # Initialize service after model is loaded
 if model is not None:
     sensor_service = SensorService(model, text_store, sensor_data_list)
+    form_sensor_router.set_service(sensor_service)
+
+# Initialize CV service (doesn't need ML model)
+cv_service = CVService(cv_store)
+doc_sensor_router.set_service(cv_service)
+
+# Initialize Form OCR service (doesn't need ML model)
+form_ocr_service = FormOCRService(form_store)
+form_ocr_module.set_service(form_ocr_service)
+
+# Include module routers
+app.include_router(form_sensor_router.router)
+app.include_router(doc_sensor_router.router)
+app.include_router(form_ocr_module.router)
 
 @app.get("/")
 async def root():
@@ -113,83 +136,27 @@ async def health_check():
 @app.post("/reload-model")
 async def reload_model():
     """Reload the sentence transformer model"""
-    global sensor_service
+    global sensor_service, cv_service, form_ocr_service
     success = load_model()
     if success:
-        # Reinitialize service with new model
+        # Reinitialize form-sensor service with new model
         sensor_service = SensorService(model, text_store, sensor_data_list)
+        form_sensor_router.set_service(sensor_service)
+        
+        # Reinitialize CV service (doesn't need model)
+        cv_service = CVService(cv_store)
+        doc_sensor_router.set_service(cv_service)
+        
+        # Reinitialize Form OCR service (doesn't need model)
+        form_ocr_service = FormOCRService(form_store)
+        form_ocr_router.set_service(form_ocr_service)
+        
         return {"message": "Model reloaded successfully", "status": "loaded"}
     else:
         raise HTTPException(
             status_code=503, 
             detail=f"Failed to reload model: {model_error}"
         )
-
-@app.post("/bulk-create-sensors", response_model=BulkCreateResponse)
-async def bulk_create_sensors(request: BulkCreateRequest):
-    """Bulk create text sensors from browser storage."""
-    try:
-        ensure_service_available()
-        return sensor_service.bulk_create_sensors(request.sensors)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error bulk creating sensors: {str(e)}")
-
-# Service initialization helper
-def ensure_service_available():
-    """Ensure the sensor service is available"""
-    global sensor_service
-    if sensor_service is None:
-        if model is not None:
-            sensor_service = SensorService(model, text_store, sensor_data_list)
-        else:
-            raise HTTPException(status_code=503, detail="Sensor service is not available - model not loaded")
-
-@app.post("/create-text-sensor/{name_id}", response_model=CreateSensorResponse)
-async def create_text_sensor(name_id: str, request: CreateSensorRequest):
-    """Create a text sensor by splitting text into paragraphs and generating embeddings."""
-    try:
-        ensure_service_available()
-        return sensor_service.create_sensor(name_id, request.text)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating text sensor: {str(e)}")
-
-@app.post("/text-sensor/{name_id}", response_model=SimilarityResponse)
-async def check_similarity(name_id: str, request: SimilarityRequest):
-    """Check semantic similarity against a specific text sensor."""
-    try:
-        ensure_service_available()
-        result = sensor_service.calculate_similarity(request.text, name_id)
-        return SimilarityResponse(**result)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error checking similarity: {str(e)}")
-
-@app.get("/text-sensors", response_model=SensorListResponse)
-async def get_text_sensors():
-    """Return mapping of nameIds to their text content and count of sensors."""
-    try:
-        ensure_service_available()
-        result = sensor_service.get_all_sensors()
-        return SensorListResponse(**result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving text sensors: {str(e)}")
-
-@app.delete("/text-sensor/{name_id}", response_model=DeleteSensorResponse)
-async def delete_text_sensor(name_id: str):
-    """Remove text sensor and return success confirmation."""
-    try:
-        ensure_service_available()
-        result = sensor_service.delete_sensor(name_id)
-        return DeleteSensorResponse(**result)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting text sensor: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
