@@ -11,8 +11,8 @@ from form_sensor.services import SensorService
 from form_sensor import router as form_sensor_router
 from doc_sensor.services import CVService
 from doc_sensor import router as doc_sensor_router
-from form_ocr.services import FormOCRService
-import form_ocr as form_ocr_module
+from stt_sensor.services import STTService
+from stt_sensor import router as stt_router
 
 app = FastAPI(
     title="Semantic Description Sensor API",
@@ -87,16 +87,54 @@ sensor_data_list = {}  # nameId -> [(paragraph, embedding), (paragraph, embeddin
 # In-memory storage for CV analysis
 cv_store = {}  # cv_id -> {id, filename, upload_date, pages, raw_text, file_size, analysis}
 
-# In-memory storage for Form OCR
-form_store = {}  # form_id -> {id, filename, upload_date, page_count, file_size, processing_status, pages, metadata}
+# Whisper model for STT
+whisper_model = None
+whisper_processor = None
+whisper_error = None
 
-# Initialize services (will be set after model loads)
+def load_whisper_model():
+    """Load Distil-Whisper distil-large-v3 model from Hugging Face"""
+    global whisper_model, whisper_processor, whisper_error
+    try:
+        print("Loading Distil-Whisper distil-large-v3 model from Hugging Face...")
+        from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+        import torch
+        
+        model_id = "distil-whisper/distil-large-v3"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        
+        # Load model
+        whisper_model = AutoModelForSpeechSeq2Seq.from_pretrained(
+            model_id,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            use_safetensors=True
+        )
+        whisper_model.to(device)
+        
+        # Load processor
+        whisper_processor = AutoProcessor.from_pretrained(model_id)
+        
+        whisper_error = None
+        print(f"Distil-Whisper model loaded successfully on {device}")
+        return True
+    except Exception as e:
+        error_msg = f"Failed to load Distil-Whisper model: {str(e)}"
+        print(error_msg)
+        whisper_error = error_msg
+        whisper_model = None
+        whisper_processor = None
+        return False
+
+# Initialize services (will be set after models load)
 sensor_service = None
 cv_service = None
-form_ocr_service = None
+stt_service = None
 
-# Try to load model on startup
+# Try to load models on startup
 load_model()
+load_whisper_model()
 
 # Initialize service after model is loaded
 if model is not None:
@@ -107,14 +145,15 @@ if model is not None:
 cv_service = CVService(cv_store)
 doc_sensor_router.set_service(cv_service)
 
-# Initialize Form OCR service (doesn't need ML model)
-form_ocr_service = FormOCRService(form_store)
-form_ocr_module.set_service(form_ocr_service)
+# Initialize STT service
+if whisper_model is not None and whisper_processor is not None:
+    stt_service = STTService(whisper_model, whisper_processor)
+    stt_router.set_service(stt_service)
 
 # Include module routers
 app.include_router(form_sensor_router.router)
 app.include_router(doc_sensor_router.router)
-app.include_router(form_ocr_module.router)
+app.include_router(stt_router.router)
 
 @app.get("/")
 async def root():
@@ -136,7 +175,7 @@ async def health_check():
 @app.post("/reload-model")
 async def reload_model():
     """Reload the sentence transformer model"""
-    global sensor_service, cv_service, form_ocr_service
+    global sensor_service, cv_service, stt_service
     success = load_model()
     if success:
         # Reinitialize form-sensor service with new model
@@ -147,9 +186,10 @@ async def reload_model():
         cv_service = CVService(cv_store)
         doc_sensor_router.set_service(cv_service)
         
-        # Reinitialize Form OCR service (doesn't need model)
-        form_ocr_service = FormOCRService(form_store)
-        form_ocr_router.set_service(form_ocr_service)
+        # Reinitialize STT service
+        if whisper_model is not None and whisper_processor is not None:
+            stt_service = STTService(whisper_model, whisper_processor)
+            stt_router.set_service(stt_service)
         
         return {"message": "Model reloaded successfully", "status": "loaded"}
     else:
