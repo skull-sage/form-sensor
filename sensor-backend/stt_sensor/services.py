@@ -2,8 +2,7 @@
 Business logic services for STT operations.
 """
 
-import tempfile
-import os
+import io
 import torch
 from fastapi import HTTPException, UploadFile
 from .validators import validate_audio_file, validate_file_size
@@ -41,35 +40,60 @@ class STTService:
         # Validate file
         validate_audio_file(file)
         
-        # Read file content
+        # Read file content into memory
         file_content = await file.read()
         
         # Validate file size (25MB max)
         validate_file_size(len(file_content))
         
-        # Save to temporary file
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
-                temp_file.write(file_content)
-                temp_path = temp_file.name
+            print(f"Processing audio file: {file.filename}, size: {len(file_content)} bytes")
             
-            # Load audio using librosa or torchaudio
-            import librosa
-            audio, sample_rate = librosa.load(temp_path, sr=16000)
+            # Create buffer from uploaded audio
+            audio_buffer = io.BytesIO(file_content)
+            audio_buffer.name = file.filename or 'audio.mp3'
+            
+            # Load audio with torchaudio (simpler than librosa)
+            import torchaudio
+            
+            # Load audio from buffer
+            waveform, sample_rate = torchaudio.load(audio_buffer)
+            
+            # Convert to mono if stereo
+            if waveform.shape[0] > 1:
+                waveform = torch.mean(waveform, dim=0, keepdim=True)
+            
+            # Resample to 16kHz if needed
+            if sample_rate != 16000:
+                resampler = torchaudio.transforms.Resample(sample_rate, 16000)
+                waveform = resampler(waveform)
+                sample_rate = 16000
+            
+            # Convert to numpy array and flatten
+            audio = waveform.squeeze().numpy()
             
             # Calculate duration
             duration = len(audio) / sample_rate
+            print(f"Audio duration: {duration:.2f} seconds, samples: {len(audio)}")
             
-            # Process audio
+            # Process audio with Whisper processor
             inputs = self.processor(
                 audio,
                 sampling_rate=16000,
                 return_tensors="pt"
             ).to(self.device)
             
+            print(f"Input features shape: {inputs['input_features'].shape}")
+            
             # Generate transcription
+            max_new_tokens = 448 if duration <= 30 else int(duration * 15)
+            print(f"Using max_new_tokens: {max_new_tokens}")
+            
             with torch.no_grad():
-                predicted_ids = self.model.generate(inputs["input_features"])
+                predicted_ids = self.model.generate(
+                    inputs["input_features"],
+                    max_new_tokens=max_new_tokens
+                )
             
             # Decode transcription
             transcription = self.processor.batch_decode(
@@ -77,23 +101,18 @@ class STTService:
                 skip_special_tokens=True
             )[0]
             
-            # Clean up temp file
-            os.unlink(temp_path)
-            
-            # Distil-Whisper doesn't return language, default to English
-            # You can add language detection if needed
-            language = "en"
+            print(f"Transcription: {transcription}")
             
             return TranscriptionResponse(
                 text=transcription.strip(),
-                language=language,
+                language="en",
                 duration=round(duration, 2)
             )
             
         except Exception as e:
-            # Clean up temp file if it exists
-            if 'temp_path' in locals() and os.path.exists(temp_path):
-                os.unlink(temp_path)
+            print(f"Transcription error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             
             raise HTTPException(
                 status_code=500,

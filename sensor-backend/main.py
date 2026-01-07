@@ -8,11 +8,11 @@ import json
 
 from form_sensor.schemas import HealthResponse
 from form_sensor.services import SensorService
-from form_sensor import router as form_sensor_router
+from form_sensor.router import router as form_sensor_router, set_service as set_form_sensor_service
 from doc_sensor.services import CVService
-from doc_sensor import router as doc_sensor_router
+from doc_sensor.router import router as doc_sensor_router, set_service as set_doc_sensor_service
 from stt_sensor.services import STTService
-from stt_sensor import router as stt_router
+from stt_sensor.router import router as stt_router, set_service as set_stt_service
 
 app = FastAPI(
     title="Semantic Description Sensor API",
@@ -139,21 +139,21 @@ load_whisper_model()
 # Initialize service after model is loaded
 if model is not None:
     sensor_service = SensorService(model, text_store, sensor_data_list)
-    form_sensor_router.set_service(sensor_service)
+    set_form_sensor_service(sensor_service)
 
 # Initialize CV service (doesn't need ML model)
 cv_service = CVService(cv_store)
-doc_sensor_router.set_service(cv_service)
+set_doc_sensor_service(cv_service)
 
 # Initialize STT service
 if whisper_model is not None and whisper_processor is not None:
     stt_service = STTService(whisper_model, whisper_processor)
-    stt_router.set_service(stt_service)
+    set_stt_service(stt_service)
 
 # Include module routers
-app.include_router(form_sensor_router.router)
-app.include_router(doc_sensor_router.router)
-app.include_router(stt_router.router)
+app.include_router(form_sensor_router)
+app.include_router(doc_sensor_router)
+app.include_router(stt_router)
 
 @app.get("/")
 async def root():
@@ -180,16 +180,16 @@ async def reload_model():
     if success:
         # Reinitialize form-sensor service with new model
         sensor_service = SensorService(model, text_store, sensor_data_list)
-        form_sensor_router.set_service(sensor_service)
+        set_form_sensor_service(sensor_service)
         
         # Reinitialize CV service (doesn't need model)
         cv_service = CVService(cv_store)
-        doc_sensor_router.set_service(cv_service)
+        set_doc_sensor_service(cv_service)
         
         # Reinitialize STT service
         if whisper_model is not None and whisper_processor is not None:
             stt_service = STTService(whisper_model, whisper_processor)
-            stt_router.set_service(stt_service)
+            set_stt_service(stt_service)
         
         return {"message": "Model reloaded successfully", "status": "loaded"}
     else:
