@@ -9,8 +9,8 @@ import json
 from form_sensor.schemas import HealthResponse
 from form_sensor.services import SensorService
 from form_sensor.router import router as form_sensor_router, set_service as set_form_sensor_service
-from doc_sensor.services import CVService
-from doc_sensor.router import router as doc_sensor_router, set_service as set_doc_sensor_service
+from cv_sensor.services import CVService
+from cv_sensor.router import router as cv_sensor_router, set_service as set_cv_sensor_service
 from stt_sensor.services import STTService
 from stt_sensor.router import router as stt_router, set_service as set_stt_service
 

@@ -5,29 +5,21 @@ Contains all API endpoints related to CV analysis.
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from typing import Optional
+from .cv_services import CVService
 
+from typing import Annotated
 from .schemas import (
     CVAnalysisResponse,
     CVDetailResponse,
     CVListResponse,
     DeleteCVResponse
 )
-from .services import CVService
 
-# Create module router
-router = APIRouter(
-    prefix="/doc-sensor",
-    tags=["doc-sensor"]
-)
+cvService:CVService = CVService() 
+sttService:STTService = STTService()
 
-# Service instance will be injected
-_service: Optional[CVService] = None
+router = APIRouter()
 
-
-def set_service(service: CVService):
-    """Set the service instance for this router"""
-    global _service
-    _service = service
 
 
 def get_service() -> CVService:
@@ -125,22 +117,6 @@ async def delete_cv(cv_id: str):
         )
 
 
-@router.get("/cv/{cv_id}/skills")
-async def get_cv_skills(cv_id: str):
-    """
-    Get only skill keywords for a specific CV.
-    
-    - **cv_id**: UUID of the CV
-    
-    Returns skill keywords list.
-    """
-    try:
-        service = get_service()
-        return service.get_cv_skills(cv_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving skills: {str(e)}"
-        )
+@router.post("/analyze-stt")
+async def analyze_audio(file: Annotated[bytes, File()]):
+    return {text: sttService.transcribe_audioContent(file)}

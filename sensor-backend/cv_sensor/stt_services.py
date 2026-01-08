@@ -1,0 +1,117 @@
+"""
+Business logic services for STT operations.
+"""
+
+import io
+import torch
+from fastapi import HTTPException, UploadFile
+from .validators import validate_audio_file, validate_file_size
+from .schemas import TranscriptionResponse
+
+def load_transcriber():
+    """Load Distil-Whisper model and processor."""
+    from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+    from datasets import load_dataset
+
+
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+    model_id = "distil-whisper/distil-medium.en"
+
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=False, use_safetensors=True
+    )
+    model.to(device)
+
+    processor = AutoProcessor.from_pretrained(model_id)
+
+    pipe = pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        max_new_tokens=128,
+        torch_dtype=torch_dtype,
+        device=device,
+    )
+
+    return pipe;
+
+
+class STTService:
+    """Service class for Speech-to-Text operations."""
+    
+    def __init__(self):
+        """
+        Initialize the STT service.
+        
+        Args:
+            model: Distil-Whisper model instance
+            processor: Distil-Whisper processor instance
+        """
+        self.transPipe = load_transcriber()
+        
+    
+    async def transcribe_audioContent(self, content: bytes) -> TranscriptionResponse:
+        """
+        Transcribe audio content to text.
+        
+        Args:
+            content: Audio content in bytes
+            
+        """
+        result = self.transPipe(content)
+        return result['text']
+
+        try:
+            
+            result = self.transPipe(content)
+            return result['text']
+            
+        except Exception as e:
+            print(f"Transcription error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            raise HTTPException(
+                status_code=500,
+                detail=f"Transcription failed: {str(e)}"
+            )
+
+    async def transcribe_audioFile(self, file: UploadFile) -> TranscriptionResponse:
+        """
+        Transcribe audio file to text.
+        
+        Args:
+            file: Uploaded audio file / recorded blob
+            
+        Returns:
+            TranscriptionResponse: Transcription result
+            
+        Raises:
+            HTTPException: If validation or transcription fails
+        """
+        # Validate file
+        validate_audio_file(file)
+        
+        # Read file content into memory
+        file_content = await file.read()
+        
+        # Validate file size (25MB max)
+        validate_file_size(len(file_content))
+        
+        try:
+            
+            result = self.transPipe(file_content)
+            return result['text']
+            
+        except Exception as e:
+            print(f"Transcription error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            raise HTTPException(
+                status_code=500,
+                detail=f"Transcription failed: {str(e)}"
+            )
