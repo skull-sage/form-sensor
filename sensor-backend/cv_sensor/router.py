@@ -16,10 +16,10 @@ from .schemas import (
     DeleteCVResponse
 )
 
-cvService:CVService = CVService() 
+# cvService:CVService = CVService() 
 sttService:STTService = STTService()
 
-router = APIRouter()
+router = APIRouter(prefix="/cv")
 
 
 
