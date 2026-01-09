@@ -5,7 +5,8 @@ Contains all API endpoints related to CV analysis.
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from typing import Optional
-from .cv_services import CVService
+from .service_cv import CVService
+from .service_stt import STTService
 
 from typing import Annotated
 from .schemas import (
