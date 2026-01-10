@@ -1,24 +1,45 @@
+import axios from 'axios';
+
 /**
- * Dummy function to analyze audio and return a transcription with a relevance score
+ * Function to analyze audio and return a transcription
  * @param audioBlob - The recorded audio blob
  * @param question - The question being asked
- * @returns Object containing transcribed text and relevance score (0-1)
+ * @returns Object containing transcribed text
  */
-export async function analyzeAudio(
-    audioBlob: Blob,
-    question: string
-): Promise<{ text: string; score: number }> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Dummy responses based on question keywords
-    const dummyResponses = [
-        { text: "My day has been great, thank you for asking!", score: 0.85 },
-        { text: "I'm a software developer with 5 years of experience in web development.", score: 0.92 },
-        { text: "I have worked on several AI projects including machine learning models and natural language processing.", score: 0.88 }
-    ];
 
-    // Return a random dummy response
-    const randomIndex = Math.floor(Math.random() * dummyResponses.length);
-    return dummyResponses[randomIndex];
+const dummyQ = [
+  { id: 1, query: "how have you been today ?", lead: 'Thank you for applying to this role' },
+  { id: 2, query: "Kindly, introduce yourself" },
+  { id: 3, query: "Please describe your most recent work experience" },
+  { id: 4, query: "Why do you think you are a good fit for this role?" },
+]
+
+
+export default {
+  qIdx: 0,
+  analyzeAudio: async function (audioBlob: Blob, question: string) {
+    // Create FormData and append the audio file
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+
+    try {
+      // Make POST request to the analyze-stt endpoint
+      const response = await axios.post('/cv/analyze-stt', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      this.qIdx++
+      // Return the transcribed text from the response
+      return response.data;
+    } catch (error) {
+      console.error('Error analyzing audio:', error);
+      throw error;
+    }
+  },
+  currentQ: function () {
+    return dummyQ[this.qIdx]
+  }
 }

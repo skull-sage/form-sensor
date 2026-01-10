@@ -2,14 +2,14 @@
 <div class="fullscreen flex flex-center" id="iv-container">
 
   <div style="width: 1080px;" class="q-pa-xl">
-    <div class="text-bold text-h5 q-mt-md">
+    <div class="text-bold text-h5 q-mt-md q-mb-lg">
       Rashed's Interview
     </div>
     <div class="row full-width">
-      <div class="col-md-6">
-        <div ref="qBox"></div>
+      <div class="col-md-6 q-mt-lg">
+        <SmartTxt ref="qBox">{{ currentQ.query }}</SmartTxt>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-6 justify-center">
         <MicStream ref="micStream" class="rounded-borders shadow-8"
             @recorded-chunk="handleRecordedChunk" />
 
@@ -21,32 +21,34 @@
 </template>
 <script setup lang="ts">
 import MicStream from './mic-stream.vue';
-import { reactive, ref, onMounted, onUnmounted } from 'vue';
+import { reactive, ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { animate } from 'animejs';
-import { analyzeAudio } from './cv-api';
+import cvAPI from './cv-api';
+import SmartTxt from './smart-txt.vue';
 
 const micStream = ref<InstanceType<typeof MicStream> | null>(null)
+const qBox = ref<HTMLElement | null>(null)
 
-const qList = reactive([
-  'Hi There! How have been your day?',
-  "introduce yourself",
-  "tell me your job experience relevant to AI Chocolate"])
-
-let qIdx = ref(0)
-
-// Animation instance for cleanup
-let angAnim: any = null;
+const currentQ = computed(() => cvAPI.currentQ())
+watch(currentQ, () => {
+  if (qBox.value) {
+    animate(qBox.value, {
+      opacity: [0, 1],
+      duration: 500,
+      easing: 'ease-in-out',
+    })
+    qBox.value.innerHTML = currentQ.value.query
+  }
+})
 
 const handleRecordedChunk = async (blob: Blob, duration: number) => {
-  let {text:answer, score} = await analyzeAudio(blob, qList[qIdx.value]);
-    if (score > 0.6 && qIdx.value < qList.length - 1) {
-      if (qIdx.value < qList.length - 1) {
-            qIdx.value++
-      }
-    }
+  let {text:answer, score} = await cvAPI.analyzeAudio(blob, cvAPI.currentQ().query);
+
 }
 
 
+// Animation instance for cleanup
+let angAnim: any = null;
 onMounted(() => {
   const rootElement = document.documentElement;
 
