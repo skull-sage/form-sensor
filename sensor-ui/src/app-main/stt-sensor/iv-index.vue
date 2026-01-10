@@ -42,7 +42,7 @@ watch(currentQ, () => {
 })
 
 const handleRecordedChunk = async (blob: Blob, duration: number) => {
-  let {text:answer, score} = await cvAPI.analyzeAudio(blob, cvAPI.currentQ().query);
+  let {text:answer, score} = await cvAPI.analyzeAudio(blob, currentQ.value.query);
 
 }
 
@@ -63,7 +63,7 @@ onMounted(() => {
     loop: true,
     alternate: true,
     onUpdate: () => {
-      console.log(animTarget.angle)
+
       rootElement.style.setProperty('--grd-angle', `${animTarget.angle}deg`);
     }
   });

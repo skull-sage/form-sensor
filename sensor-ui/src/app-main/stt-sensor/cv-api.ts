@@ -9,10 +9,10 @@ import axios from 'axios';
 
 
 const dummyQ = [
-  { id: 1, query: "how have you been today ?", lead: 'Thank you for applying to this role' },
-  { id: 2, query: "Kindly, introduce yourself" },
-  { id: 3, query: "Please describe your most recent work experience" },
-  { id: 4, query: "Why do you think you are a good fit for this role?" },
+  { id: 0, query: "how have you been today ?", lead: 'Thank you for applying to this role' },
+  { id: 1, query: "Kindly, introduce yourself" },
+  { id: 2, query: "Please describe your most recent work experience" },
+  { id: 3, query: "Why do you think you are a good fit for this role?" },
 ]
 
 
@@ -25,15 +25,16 @@ export default {
 
     try {
       // Make POST request to the analyze-stt endpoint
-      const response = await axios.post('/cv/analyze-stt', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // const response = await axios.post('/cv/analyze-stt', formData, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data',
+      //   },
+      // });
 
       this.qIdx++
+      return { text: 'Hello', score: 1 }
       // Return the transcribed text from the response
-      return response.data;
+      //return response.data;
     } catch (error) {
       console.error('Error analyzing audio:', error);
       throw error;
