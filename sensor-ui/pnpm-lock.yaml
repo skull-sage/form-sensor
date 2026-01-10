@@ -12,8 +12,8 @@ importers:
         specifier: ^1.16.17
         version: 1.16.17
       animejs:
-        specifier: ^3.2.2
-        version: 3.2.2
+        specifier: ^4.2.1
+        version: 4.2.2
       axios:
         specifier: ^1.9.0
         version: 1.9.0
@@ -535,8 +535,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  animejs@3.2.2:
-    resolution: {integrity: sha512-Ao95qWLpDPXXM+WrmwcKbl6uNlC5tjnowlaRYtuVDHHoygjtIPfDUoK9NthrlZsQSKjZXlmji2TrBUAVbiH0LQ==}
+  animejs@4.2.2:
+    resolution: {integrity: sha512-Ys3RuvLdAeI14fsdKCQy7ytu4057QX6Bb7m4jwmfd6iKmUmLquTwk1ut0e4NtRQgCeq/s2Lv5+oMBjz6c7ZuIg==}
 
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
@@ -2327,7 +2327,7 @@ snapshots:
 
   acorn@8.14.1: {}
 
-  animejs@3.2.2: {}
+  animejs@4.2.2: {}
 
   ansi-escapes@4.3.2:
     dependencies:

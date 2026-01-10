@@ -136,7 +136,7 @@ const setupVAD = (stream: MediaStream) => {
 }
 
 // Calculate audio energy (RMS)
-const calculateEnergy = (dataArray: Uint8Array<ArrayBufferLike>): number => {
+const calculateEnergy = (dataArray: Uint8Array): number => {
   let sum = 0
   for (let i = 0; i < dataArray.length; i++) {
     sum += dataArray[i] * dataArray[i]
