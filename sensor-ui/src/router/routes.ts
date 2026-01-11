@@ -1,7 +1,7 @@
 import { RouteRecordRaw } from 'vue-router';
 import DemoRoute from 'src/app-main/demo-examples/route-config'
 import FormSensorRoute from 'src/app-main/form-sensor/route-config'
-import DocSensorRoute from 'src/app-main/doc-sensor/route-config'
+import CVSensorRoute from 'src/app-main/cv-sensor/route-config'
 import STTSensorRoute from 'src/app-main/stt-sensor/route-config'
 import Index from 'src/app-main/index.vue'
 
@@ -24,7 +24,7 @@ const routes: RouteRecordRaw[] = [
     ...FormSensorRoute
   },
   {
-    ...DocSensorRoute
+    ...CVSensorRoute
   },
   {
     ...STTSensorRoute

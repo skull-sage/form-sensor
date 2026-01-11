@@ -1,22 +1,22 @@
-import DocSensorIndex from './index.vue'
+import CVSensorIndex from './index.vue'
 import CvUpload from './cv-upload.vue'
 import CvList from './cv-list.vue'
 
 import { RouteRecordRaw } from 'vue-router'
 
 const routeConfig: RouteRecordRaw = {
-  path: '/doc-sensor',
-  name: 'doc-sensor',
-  component: DocSensorIndex,
+  path: '/cv-sensor',
+  name: 'cv-sensor',
+  component: CVSensorIndex,
   children:[
     {
       path: '/upload',
-      name: 'doc-sensor.upload',
+      name: 'cv-sensor.upload',
       component: CvUpload,
     },
     {
       path: '/list',
-      name: 'doc-sensor.list',
+      name: 'cv-sensor.list',
       component: CvList,
     }
   ]

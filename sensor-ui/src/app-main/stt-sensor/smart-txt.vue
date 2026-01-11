@@ -21,6 +21,7 @@ let audioInstance: HTMLAudioElement | null = null;
 // Initialize audio if audioFile is provided
 if (props.audioFile) {
   audioInstance = new Audio(props.audioFile);
+  audioInstance.volume = 0.3; // Set volume to 30% (range: 0.0 to 1.0)
 }
 
 // Animate text character by character
@@ -44,7 +45,7 @@ const animateText = () => {
   // Animate the index from 0 to text length
   currentAnimation = animate(animObj, {
     index: srcTxt.length-1,
-    duration: srcTxt.length * 50, // 50ms per character
+    duration: srcTxt.length * 100, // 50ms per character
     easing: 'linear',
     onUpdate: () => {
       // Update textContent with characters up to current index
