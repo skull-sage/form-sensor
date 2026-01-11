@@ -7,6 +7,7 @@ import axios from 'axios';
  * @returns Object containing transcribed text
  */
 
+import { ref } from 'vue';
 
 const dummyQ = [
   { id: 0, query: "how have you been today ?", lead: 'Thank you for applying to this role' },
@@ -17,7 +18,7 @@ const dummyQ = [
 
 
 export default {
-  qIdx: 0,
+  qIdx: ref(0),
   analyzeAudio: async function (audioBlob: Blob, question: string) {
     // Create FormData and append the audio file
     const formData = new FormData();
@@ -31,7 +32,7 @@ export default {
       //   },
       // });
 
-      this.qIdx++
+      this.qIdx.value++
       return { text: 'Hello', score: 1 }
       // Return the transcribed text from the response
       //return response.data;
@@ -41,6 +42,6 @@ export default {
     }
   },
   currentQ: function () {
-    return dummyQ[this.qIdx]
+    return dummyQ[this.qIdx.value]
   }
 }

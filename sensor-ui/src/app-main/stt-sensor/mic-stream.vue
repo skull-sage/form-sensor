@@ -53,9 +53,9 @@ const vadState = ref<'idle' | 'recording'>('idle')
 const silenceStartTime = ref<number | null>(null)
 
 // VAD configuration
-const VOICE_THRESHOLD = 30
-const SILENCE_THRESHOLD = 20
-const SILENCE_DURATION = 3000 // 1.5 seconds
+const VOICE_THRESHOLD = 80
+const SILENCE_THRESHOLD = 60
+const SILENCE_DURATION = 2500 // 1.5 seconds
 
 // Media streams and recorders
 const videoStream = ref<MediaStream | null>(null)
@@ -172,7 +172,7 @@ const processVAD = () => {
       } else {
         const silenceDuration = now - silenceStartTime.value
         if (silenceDuration >= SILENCE_DURATION) {
-          console.log('Silence detected for 4s, stopping recording')
+          console.log(`Silence detected for ${silenceDuration/1000}s, stopping recording`)
           vadState.value = 'idle'
           silenceStartTime.value = null
           stop() // Stop recording

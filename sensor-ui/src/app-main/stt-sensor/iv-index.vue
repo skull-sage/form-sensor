@@ -7,7 +7,7 @@
     </div>
     <div class="row full-width">
       <div class="col-md-6 q-mt-lg">
-        <SmartTxt ref="qBox">{{ currentQ.query }}</SmartTxt>
+        <SmartTxt :key="currentQ.id">{{ currentQ.query }}</SmartTxt>
       </div>
       <div class="col-md-6 justify-center">
         <MicStream ref="micStream" class="rounded-borders shadow-8"
@@ -27,19 +27,9 @@ import cvAPI from './cv-api';
 import SmartTxt from './smart-txt.vue';
 
 const micStream = ref<InstanceType<typeof MicStream> | null>(null)
-const qBox = ref<HTMLElement | null>(null)
 
 const currentQ = computed(() => cvAPI.currentQ())
-watch(currentQ, () => {
-  if (qBox.value) {
-    animate(qBox.value, {
-      opacity: [0, 1],
-      duration: 500,
-      easing: 'ease-in-out',
-    })
-    qBox.value.innerHTML = currentQ.value.query
-  }
-})
+
 
 const handleRecordedChunk = async (blob: Blob, duration: number) => {
   let {text:answer, score} = await cvAPI.analyzeAudio(blob, currentQ.value.query);

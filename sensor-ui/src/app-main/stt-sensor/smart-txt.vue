@@ -8,9 +8,20 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { animate } from 'animejs';
 
+// Props
+const props = defineProps<{
+  audioFile?: string; // Optional audio file name to play during animation
+}>();
+
 // Refs
 const txtContainer = ref<HTMLElement | null>(null);
 let currentAnimation: any = null;
+let audioInstance: HTMLAudioElement | null = null;
+
+// Initialize audio if audioFile is provided
+if (props.audioFile) {
+  audioInstance = new Audio(props.audioFile);
+}
 
 // Animate text character by character
 const animateText = () => {
@@ -40,6 +51,14 @@ const animateText = () => {
       const currentIndex = Math.floor(animObj.index);
       for (let i = resultTxt.length; i <= currentIndex; i++) {
         resultTxt += srcTxt[i];
+
+        // Play audio beep for each new character
+        if (audioInstance) {
+          audioInstance.currentTime = 0; // Reset to start
+          audioInstance.play().catch(err => {
+            console.warn('Audio play failed:', err);
+          });
+        }
       }
       txtContainer.value.textContent = resultTxt;
     },
@@ -58,6 +77,12 @@ onBeforeUnmount(() => {
   if (currentAnimation) {
     currentAnimation.cancel();
     currentAnimation = null;
+  }
+
+  // Cleanup audio
+  if (audioInstance) {
+    audioInstance.pause();
+    audioInstance = null;
   }
 });
 </script>
