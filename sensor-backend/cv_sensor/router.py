@@ -17,8 +17,10 @@ from .schemas import (
     DeleteCVResponse
 )
 
-# cvService:CVService = CVService() 
-sttService:STTService = STTService()
+# Initialize services
+_cv_store = {}
+_service: CVService = CVService(_cv_store)
+sttService: STTService = STTService()
 
 router = APIRouter(prefix="/cv")
 
@@ -135,7 +137,6 @@ async def analyze_audio(file: Annotated[bytes, File()], expected: Annotated[str,
     similarity_score = check_similarity(text, expected)
     
     return {
-        "text": text,
-        "expected": expected,
-        "similarity_score": similarity_score
+        "transcribed": text,
+        "similarity": similarity_score
     }

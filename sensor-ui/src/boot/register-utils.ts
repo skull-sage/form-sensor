@@ -11,7 +11,7 @@ declare module 'vue' {
 
 
 
-const api = axios.create({ baseURL: 'https://api.example.com' });
+const api = axios.create({ baseURL: 'http://localhost:8000' });
 
 export default defineBoot(({ app, router, store }) => {
 

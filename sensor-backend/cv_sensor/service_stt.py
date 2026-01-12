@@ -63,7 +63,9 @@ class STTService:
         """
         try:
             result = self.transPipe(content)
-            return result['text']
+            txt = result['text']
+
+            return txt
             
         except Exception as e:
             print(f"Transcription error: {str(e)}")
