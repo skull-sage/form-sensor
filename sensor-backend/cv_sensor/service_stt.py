@@ -4,15 +4,13 @@ Business logic services for STT operations.
 
 import io
 import torch
-from fastapi import HTTPException, UploadFile 
-from .schemas import TranscriptionResponse
+from fastapi import HTTPException, UploadFile  
 import filetype
 
 def load_transcriber():
     """Load Distil-Whisper model and processor."""
     from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-    from datasets import load_dataset
-
+    
 
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -53,19 +51,17 @@ class STTService:
         self.transPipe = load_transcriber()
         
     
-    async def transcribe_audioContent(self, content: bytes) -> TranscriptionResponse:
+    async def transcribe_audioContent(self, content: bytes) -> str:
         """
         Transcribe audio content to text.
         
         Args:
             content: Audio content in bytes
             
+        Returns:
+            str: Transcribed text
         """
-        result = self.transPipe(content)
-        return result['text']
-
         try:
-            
             result = self.transPipe(content)
             return result['text']
             
@@ -79,7 +75,7 @@ class STTService:
                 detail=f"Transcription failed: {str(e)}"
             )
 
-    async def transcribe_audioFile(self, file: UploadFile) -> TranscriptionResponse:
+    async def transcribe_audioFile(self, file: UploadFile) -> str:
         """
         Transcribe audio file to text.
         
@@ -87,7 +83,7 @@ class STTService:
             file: Uploaded audio file / recorded blob
             
         Returns:
-            TranscriptionResponse: Transcription result
+            str: Transcribed text
             
         Raises:
             HTTPException: If validation or transcription fails

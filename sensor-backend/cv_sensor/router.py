@@ -3,10 +3,11 @@ Router for the doc-sensor module.
 Contains all API endpoints related to CV analysis.
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import Optional
 from .service_cv import CVService
 from .service_stt import STTService
+from .sml_sensor import check_similarity
 
 from typing import Annotated
 from .schemas import (
@@ -119,5 +120,22 @@ async def delete_cv(cv_id: str):
 
 
 @router.post("/analyze-stt")
-async def analyze_audio(file: Annotated[bytes, File()]):
-    return {text: sttService.transcribe_audioContent(file)}
+async def analyze_audio(file: Annotated[bytes, File()], expected: Annotated[str, Form(...)]):
+    """
+    Transcribe audio and check similarity with expected text.
+    
+    Args:
+        file: Audio file bytes
+        expected: Expected text to compare against
+        
+    Returns:
+        dict: Contains transcribed text and similarity score
+    """
+    text = await sttService.transcribe_audioContent(file)
+    similarity_score = check_similarity(text, expected)
+    
+    return {
+        "text": text,
+        "expected": expected,
+        "similarity_score": similarity_score
+    }

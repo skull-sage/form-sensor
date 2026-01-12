@@ -57,7 +57,7 @@ async def json_decode_exception_handler(request: Request, exc: json.JSONDecodeEr
   
 
 # Include module routers 
-app.include_router(stt_router)
+app.include_router(cv_sensor_router)
 
 @app.get("/")
 async def root():
