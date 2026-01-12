@@ -47,6 +47,7 @@ const animateText = () => {
     index: srcTxt.length-1,
     duration: srcTxt.length * 100, // 50ms per character
     easing: 'linear',
+    delay: 500,
     onUpdate: () => {
       // Update textContent with characters up to current index
       const currentIndex = Math.floor(animObj.index);

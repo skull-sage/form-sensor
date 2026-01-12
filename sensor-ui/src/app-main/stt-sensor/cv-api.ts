@@ -23,12 +23,17 @@ const dummyQ = [
   {
     id: 1,
     query: "Kindly, introduce yourself",
-    expected: 'working as a technical lead helping business with scalable and affordable technolo solutions',
+    expected: 'With 10+years of experience, working as a technical lead helping business with scalable and affordable solutions',
     lead: 'Nice!',
     eval: { ans: undefined, score: 0 }
   },
-  { id: 2, query: "Please describe your most recent work experience" },
-  { id: 3, query: "Why do you think you are a good fit for this role?" },
+  {
+    id: 2,
+    query: "Please describe your most recent work experience relevant to this role",
+    eval: { ans: undefined, score: 0 },
+    expected: 'developed enterprise knowledge hub with RAG pipeline and LLM',
+    lead: 'Great! Thank you so much for your time. Our HR will be in contact with you soon, preferabely within a week or so.',
+  },
 ]
 
 

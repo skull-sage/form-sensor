@@ -6,9 +6,9 @@
       autoplay
       playsinline
       muted
-      class="webcam-video"
-    >
-  </video>
+      class="webcam-video "
+    />
+
     <!-- Audio Visualizer -->
     <MicVisualizer :audio-stream="videoStream" />
 
@@ -30,11 +30,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, toRef, nextTick } from 'vue'
 import { useQuasar } from 'quasar'
 import MicVisualizer from './mic-visualizer.vue'
 
 const $q = useQuasar()
+
+// Props
+const props = defineProps<{
+  videoStream: MediaStream | null
+}>()
 
 // Emits
 const emit = defineEmits<{
@@ -58,7 +63,7 @@ const SILENCE_THRESHOLD = 60
 const SILENCE_DURATION = 2500 // 1.5 seconds
 
 // Media streams and recorders
-const videoStream = ref<MediaStream | null>(null)
+const videoStream = toRef(props, 'videoStream')
 let mediaRecorder: MediaRecorder | null = null
 let audioChunks: Blob[] = []
 let chunkStartTime = 0
@@ -69,50 +74,6 @@ let vadAnalyser: AnalyserNode | null = null
 let vadDataArray: Uint8Array | null = null
 let vadAnimationFrameId: number | null = null
 
-// Initialize webcam and audio
-const initializeMedia = async () => {
-  try {
-    // Request video and audio
-    videoStream.value = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 360 },
-        height: { ideal: 360 },
-        facingMode: 'user'
-      },
-      audio: {
-        channelCount: 1,  // Mono audio
-        sampleRate: 16000, // 16kHz sample rate (optimal for speech)
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    })
-
-    // Set video source
-    if (videoElement.value) {
-      videoElement.value.srcObject = videoStream.value
-    }
-
-    // Setup VAD
-    if (vadEnabled.value && videoStream.value) {
-      setupVAD(videoStream.value)
-    }
-
-    $q.notify({
-      type: 'positive',
-      message: 'Camera and microphone ready',
-      icon: 'check_circle',
-      timeout: 2000
-    })
-  } catch (error) {
-    console.error('Error accessing media devices:', error)
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to access camera/microphone',
-      caption: error instanceof Error ? error.message : 'Unknown error'
-    })
-  }
-}
 
 // Setup VAD
 const setupVAD = (stream: MediaStream) => {
@@ -271,9 +232,43 @@ const stop = () => {
 
 
 
+// Watch for stream changes and initialize
+watch(() => props.videoStream, async (newStream) => {
+  if (newStream) {
+    console.log('Stream received in iv-recorder:', newStream)
+    console.log('Video tracks:', newStream.getVideoTracks())
+    console.log('Audio tracks:', newStream.getAudioTracks())
+
+    // Wait for DOM to be ready
+    await nextTick()
+
+    // Set video source
+    if (videoElement.value) {
+      console.log('Setting video element srcObject')
+      videoElement.value.srcObject = newStream
+
+      // Ensure video plays
+      try {
+        await videoElement.value.play()
+        console.log('Video playing successfully')
+      } catch (err) {
+        console.error('Error playing video:', err)
+      }
+    } else {
+      console.error('Video element ref is null')
+    }
+
+    // Setup VAD
+    if (vadEnabled.value) {
+      setupVAD(newStream)
+    }
+  }
+}, { immediate: true })
+
 // Lifecycle hooks
-onMounted(async () => {
-  await initializeMedia()
+onMounted(() => {
+  console.log('iv-recorder mounted, videoElement:', videoElement.value)
+  console.log('Props videoStream:', props.videoStream)
 })
 
 onBeforeUnmount(() => {
@@ -291,10 +286,7 @@ onBeforeUnmount(() => {
     vadAudioContext.close()
   }
 
-  // Stop all media tracks
-  if (videoStream.value) {
-    videoStream.value.getTracks().forEach(track => track.stop())
-  }
+  // Note: Stream cleanup is handled by parent component
 })
 
 // Expose methods for parent component
@@ -307,8 +299,16 @@ defineExpose({
 <style scoped>
 .mic-stream-container {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background: #000;
   overflow: hidden;
+  position: relative;
+}
+
+.webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 }
 </style>
