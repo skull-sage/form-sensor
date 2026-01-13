@@ -1,16 +1,16 @@
 <template>
   <div class="mic-stream-container  relative-position" style="width: 360px; height: 360px;">
-    <!-- Video Element -->
-    <video
-      ref="videoElement"
-      autoplay
-      playsinline
-      muted
-      class="webcam-video "
-    />
+    <!-- Placeholder Image -->
+    <div class="bg-blue-grey-1">
+      <img
+        src="./skull-man.png"
+        alt="Skull Man"
+        class="placeholder-image"
+      />
+    </div>
 
     <!-- Audio Visualizer -->
-    <MicVisualizer :audio-stream="videoStream" />
+    <MicVisualizer :audio-stream="micStream" />
 
     <!-- VAD Status Indicator -->
     <div v-if="vadEnabled" class="absolute-top-right q-ma-sm">
@@ -38,16 +38,13 @@ const $q = useQuasar()
 
 // Props
 const props = defineProps<{
-  videoStream: MediaStream | null
+  micStream: MediaStream | null
 }>()
 
 // Emits
 const emit = defineEmits<{
   'recorded-chunk': [blob: Blob, duration: number]
 }>()
-
-// Refs
-const videoElement = ref<HTMLVideoElement | null>(null)
 
 // State
 const isRecording = ref(false)
@@ -63,7 +60,7 @@ const SILENCE_THRESHOLD = 60
 const SILENCE_DURATION = 2500 // 1.5 seconds
 
 // Media streams and recorders
-const videoStream = toRef(props, 'videoStream')
+const micStream = toRef(props, 'micStream')
 let mediaRecorder: MediaRecorder | null = null
 let audioChunks: Blob[] = []
 let chunkStartTime = 0
@@ -164,7 +161,7 @@ const emitRecordedChunk = () => {
 
 // Start recording (exposed method)
 const start = () => {
-  if (!videoStream.value) {
+  if (!micStream.value) {
     console.error('Media stream not ready')
     return
   }
@@ -176,7 +173,7 @@ const start = () => {
 
   try {
     // Create audio-only MediaRecorder
-    const audioTrack = videoStream.value.getAudioTracks()[0]
+    const audioTrack = micStream.value.getAudioTracks()[0]
     if (!audioTrack) {
       throw new Error('No audio track available')
     }
@@ -233,30 +230,10 @@ const stop = () => {
 
 
 // Watch for stream changes and initialize
-watch(() => props.videoStream, async (newStream) => {
+watch(() => props.micStream, async (newStream) => {
   if (newStream) {
     console.log('Stream received in iv-recorder:', newStream)
-    console.log('Video tracks:', newStream.getVideoTracks())
     console.log('Audio tracks:', newStream.getAudioTracks())
-
-    // Wait for DOM to be ready
-    await nextTick()
-
-    // Set video source
-    if (videoElement.value) {
-      console.log('Setting video element srcObject')
-      videoElement.value.srcObject = newStream
-
-      // Ensure video plays
-      try {
-        await videoElement.value.play()
-        console.log('Video playing successfully')
-      } catch (err) {
-        console.error('Error playing video:', err)
-      }
-    } else {
-      console.error('Video element ref is null')
-    }
 
     // Setup VAD
     if (vadEnabled.value) {
@@ -267,8 +244,8 @@ watch(() => props.videoStream, async (newStream) => {
 
 // Lifecycle hooks
 onMounted(() => {
-  console.log('iv-recorder mounted, videoElement:', videoElement.value)
-  console.log('Props videoStream:', props.videoStream)
+  console.log('iv-recorder mounted')
+  console.log('Props micStream:', props.micStream)
 })
 
 onBeforeUnmount(() => {
@@ -296,7 +273,7 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .mic-stream-container {
   width: 100%;
   height: 100%;
@@ -305,10 +282,14 @@ defineExpose({
   position: relative;
 }
 
-.webcam-video {
+.placeholder-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 8px;
+}
+
+.person-pic {
+  background-image: linear-gradient(50deg, $yellow-1, $red-1);
 }
 </style>

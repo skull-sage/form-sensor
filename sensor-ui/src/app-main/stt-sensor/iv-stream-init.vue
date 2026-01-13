@@ -1,15 +1,16 @@
 <template>
   <div class="text-center q-pa-xl">
     <div class="text-h3 text-bold text-grey-6">
-      Welcome Rashed
+      Welcome Mr. Skull
     </div>
     <div class="text-h6 text-blue-grey-8">
       We hope you are ready to start the interview
     </div>
     <q-btn
       label="I am ready"
+      icon-right="arrow_forward"
       color="primary"
-      class="q-mt-md"
+      class="q-mt-md" rounded
       @click="handleReady"
       :loading="isInitializing"
     />
@@ -37,11 +38,11 @@ const handleReady = async () => {
   try {
     // Request video and audio access
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 360 },
-        height: { ideal: 360 },
-        facingMode: 'user'
-      },
+      // video: {
+      //   width: { ideal: 360 },
+      //   height: { ideal: 360 },
+      //   facingMode: 'user'
+      // },
       audio: {
         channelCount: 1,  // Mono audio
         sampleRate: 16000, // 16kHz sample rate (optimal for speech)

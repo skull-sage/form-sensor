@@ -22,7 +22,7 @@ const dummyQ = [
   },
   {
     id: 1,
-    query: "Kindly, introduce yourself",
+    query: "Kindly, introduce yourself.",
     expected: 'With 10+years of experience, working as a technical lead helping business with scalable and affordable solutions',
     lead: 'Nice!',
     eval: { ans: undefined, score: 0 }
@@ -63,17 +63,20 @@ export default {
         currentQuestion.eval.score = response.data.similarity;
       }
 
-      // Return the transcribed text and similarity score from the response
-      return { text: response.data.transcribed, score: response.data.similarity };
+      if (!this.isLastQ()) {
+        setTimeout(() => this.qIdx.value++, 2000);
+      }
+
+
     } catch (error) {
       console.error('Error analyzing audio:', error);
       throw error;
     }
   },
-  moveToNext: function () {
-    this.qIdx.value++
-  },
   currentQ: function () {
     return dummyQ[this.qIdx.value]
+  },
+  isLastQ: function () {
+    return this.qIdx.value === dummyQ.length - 1
   }
 }
