@@ -1,8 +1,8 @@
 """
-Semantic Similarity Module using BiEncoder.
+Semantic Similarity Module using Sentence Transformers.
 
 This module provides functionality to check semantic similarity between text pairs
-using HuggingFace's BiEncoder model with cosine similarity.
+using HuggingFace's Sentence Transformers with cosine similarity.
 """
 
 from sentence_transformers import SentenceTransformer, util
@@ -12,17 +12,21 @@ import torch
 
 class SimilarityChecker:
     """
-    A class to check semantic similarity between text pairs using BiEncoder.
-    Uses cosine similarity on independently computed embeddings for efficiency.
+    A class to check semantic similarity between text pairs using Sentence Transformers.
+    Uses bi-encoder to create embeddings and cosine similarity for scoring.
+    Returns normalized scores between 0 and 1.
     """
     
-    def __init__(self, model_name: str = "msmarco-MiniLM-L6-cos-v5"):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         """
-        Initialize the similarity checker with a BiEncoder model.
+        Initialize the similarity checker with a Sentence Transformer model.
         
         Args:
-            model_name: Name of the BiEncoder model from HuggingFace
-                       Default: msmarco-MiniLM-L6-cos-v5 (optimized for semantic search)
+            model_name: Name of the Sentence Transformer model from HuggingFace
+                       Default: all-MiniLM-L6-v2 (fast, accurate, general-purpose)
+                       Alternatives:
+                       - "all-mpnet-base-v2" (more accurate, slower)
+                       - "paraphrase-multilingual-MiniLM-L12-v2" (multilingual)
         """
         self.model = SentenceTransformer(model_name)
     
@@ -35,18 +39,19 @@ class SimilarityChecker:
         Check semantic similarity between two text strings using cosine similarity.
         
         Args:
-            text1: First text string
-            text2: Second text string
+            text1: First text string (e.g., expected answer)
+            text2: Second text string (e.g., candidate's answer)
             
         Returns:
-            float: Cosine similarity score between -1 and 1 (higher means more similar)
+            float: Similarity score between 0 and 1 (1 = identical, 0 = completely different)
         """
-        # Encode both texts
+        # Encode both texts to embeddings
         embeddings = self.model.encode([text1, text2], convert_to_tensor=True)
         
         # Calculate cosine similarity
         similarity = util.cos_sim(embeddings[0], embeddings[1])
         
+        # Convert to float and return (value between 0 and 1)
         return float(similarity.item())
  
 # Global instance for reuse
